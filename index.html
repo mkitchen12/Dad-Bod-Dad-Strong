@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>Dad Bod → Dad Strong</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--ink:#111827;--muted:#6b7280;--accent:#111827;--good:#16a34a;--line:#e5e7eb}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.app{max-width:680px;margin:auto;padding:20px 16px 40px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+h1{font-size:25px;margin:0}.sub{color:var(--muted);font-size:14px;margin-top:3px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:12px 0;box-shadow:0 2px 10px #00000008}
+.hero{background:#111827;color:#fff;border:0}.hero .muted{color:#cbd5e1}.hero h2{margin:5px 0 8px;font-size:25px}
+button{border:0;border-radius:12px;padding:12px 15px;font-weight:700;font-size:15px;cursor:pointer}
+.primary{background:#fff;color:#111827}.dark{background:#111827;color:#fff}.outline{background:#fff;border:1px solid var(--line);color:var(--ink)}
+.row{display:flex;gap:10px;align-items:center}.between{justify-content:space-between}.grow{flex:1}
+.progress{height:9px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin:12px 0}.bar{height:100%;background:#16a34a;width:0}
+.exercise{display:flex;align-items:center;gap:12px}.num{width:34px;height:34px;border-radius:50%;background:#eef0f3;display:grid;place-items:center;font-weight:800}.done .num{background:#dcfce7;color:#15803d}.done .title{text-decoration:line-through;color:var(--muted)}
+.check{width:42px;height:42px;border-radius:12px;padding:0;background:#f3f4f6;font-size:20px}.done .check{background:#dcfce7;color:#15803d}
+.small{font-size:13px;color:var(--muted)}.tag{display:inline-block;background:#eef2ff;padding:5px 8px;border-radius:8px;font-size:12px;font-weight:700}
+.nav{position:sticky;bottom:12px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:8px;display:flex;gap:6px;box-shadow:0 6px 24px #0002}.nav button{flex:1;background:transparent}.nav button.active{background:#111827;color:#fff}
+.timer{font-size:64px;font-variant-numeric:tabular-nums;text-align:center;font-weight:800;margin:20px 0}.center{text-align:center}
+select,input{padding:11px;border:1px solid var(--line);border-radius:10px;font-size:15px;background:#fff}
+.modal{position:fixed;inset:0;background:#0007;display:none;align-items:end;justify-content:center}.modal.open{display:flex}.sheet{background:#fff;border-radius:22px 22px 0 0;padding:22px;max-width:680px;width:100%;max-height:85vh;overflow:auto}
+hr{border:0;border-top:1px solid var(--line);margin:16px 0}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const workouts={
+Mon:{name:"Strength + Core",focus:"Build strength + core",ex:[
+["Push-Ups","rep",12,"Chest, shoulders, triceps. Keep your body straight."],
+["Bodyweight Squats","rep",20,"Sit back and down, then drive through your feet."],
+["Dead Bugs","repSide",10,"Opposite arm and leg. Keep your lower back pressed down."],
+["Reverse Lunges","repSide",10,"Step back, lower under control, then drive through the front foot."],
+["Plank Shoulder Taps","repTotal",24,"Tap opposite shoulders. Keep your hips as still as possible."],
+["Glute Bridges","rep",20,"Drive hips up, squeeze at the top, lower slowly."],
+["Mountain Climbers","repTotal",30,"Drive knees forward. Controlled is fine."],
+["Bird Dogs","repSide",10,"Opposite arm and leg. Pause briefly; keep hips level."]
+]},
+Tue:{name:"Core Stability + Full Body",focus:"Control, balance + legs",ex:[
+["Side Plank","timeSide",20,"Elbow under shoulder. Keep hips lifted and body straight."],
+["Reverse Lunges","repSide",12,"Step backward and control the descent."],
+["Incline Push-Ups","rep",15,"Hands on a sturdy elevated surface; keep body straight."],
+["Bird Dogs","repSide",12,"Opposite arm and leg. Don't let your hips rotate."],
+["Squat-to-Reach","rep",15,"Squat down, stand and reach overhead."],
+["Dead Bugs","repSide",12,"Slowly extend opposite arm and leg; back stays down."],
+["Mountain Climbers","repTotal",40,"Keep your core tight and move under control."]
+]},
+Wed:{name:"Full-Body Burn",focus:"Strength + conditioning",ex:[
+["Squats","rep",20,"Controlled down, strong drive up."],
+["Push-Ups","rep",10,"Modify as needed; good form first."],
+["Plank Shoulder Taps","repTotal",24,"Keep hips steady."],
+["Jumping Jacks","rep",30,"Land softly; step side-to-side if needed."],
+["Leg Raises","rep",12,"Lower slowly; don't let your lower back arch."],
+["Mountain Climbers","repTotal",40,"Controlled knee drives."]
+]},
+Thu:{name:"Recovery + Core",focus:"Move, reset + strengthen",ex:[
+["Glute Bridge Hold","time",30,"Lift hips and squeeze glutes."],
+["Dead Bugs","repSide",10,"Slow and controlled."],
+["Heel Taps","repTotal",30,"Reach side-to-side toward your heels."],
+["Bird Dogs","repSide",10,"Keep your hips level."],
+["Plank","time",30,"Squeeze abs and glutes; breathe normally."]
+]},
+Fri:{name:"Strength + Core Challenge",focus:"Finish the week strong",ex:[
+["Reverse Lunges","repSide",12,"Control each rep."],
+["Push-Ups","rep",12,"Keep a straight body line."],
+["Plank","time",45,"Brace your core and keep breathing."],
+["Squat Hold","time",30,"Sit into a comfortable squat and hold."],
+["Leg Raises","rep",12,"Slowly lower; protect your back."],
+["High Knees","repTotal",30,"Drive knees up; march if needed."]
+]}
+};
+const dayNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+let state=JSON.parse(localStorage.getItem("dbds")||'{"completed":{},"streak":0,"lastDate":"","round":1}');
+let day=dayNames[new Date().getDay()];
+if(day==="Sun") day="Mon";
+let current={day,round:1,index:0};
+let timer=null, seconds=0;
+
+function save(){localStorage.setItem("dbds",JSON.stringify(state))}
+function todayKey(){return new Date().toISOString().slice(0,10)}
+function isDone(d,i,r){return !!state.completed[todayKey()+"-"+d+"-"+r+"-"+i]}
+function setDone(d,i,r,v){let k=todayKey()+"-"+d+"-"+r+"-"+i;if(v)state.completed[k]=true;else delete state.completed[k];save()}
+function markWorkout(){let k=todayKey()+"-workout";if(!state.completed[k]){state.completed[k]=true;state.lastDate=todayKey();state.streak=(state.streak||0)+1;save()}}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function render(){
+const w=workouts[day]; const doneCount=w.ex.reduce((a,_,i)=>a+(isDone(day,i,current.round)?1:0),0);
+document.getElementById("root").innerHTML=`
+<div class="app">
+<div class="top"><div><h1>Dad Bod → Dad Strong</h1><div class="sub">No weights. Real life. Keep showing up.</div></div><span class="tag">Week 1</span></div>
+<div class="card hero"><div class="muted">${day} • Round ${current.round}</div><h2>${w.name}</h2><div class="muted">${w.focus}</div><div class="progress"><div class="bar" style="width:${doneCount/w.ex.length*100}%"></div></div><div class="row between"><span>${doneCount}/${w.ex.length} exercises</span><button class="primary" onclick="startNext()">START NEXT</button></div></div>
+<div class="card"><div class="row between"><strong>Today</strong><span class="small">${state.streak||0} workout streak 🔥</span></div></div>
+${w.ex.map((e,i)=>`<div class="card ${isDone(day,i,current.round)?'done':''}"><div class="exercise"><div class="num">${i+1}</div><div class="grow"><div class="title"><strong>${e[0]}</strong></div><div class="small">${target(e)}</div></div><button class="check" onclick="toggleDone(${i})">${isDone(day,i,current.round)?'✓':'○'}</button></div></div>`).join("")}
+<div class="row"><button class="dark grow" onclick="completeRound()">COMPLETE ROUND</button><button class="outline" onclick="showTimer()">TIMER</button></div>
+<div class="card"><strong>How to use</strong><p class="small">Do one round when life is busy. Do two when you can. Three is a bonus. Tap ✓ after each exercise. Your progress saves automatically on this device.</p></div>
+<div class="nav"><button class="active">Today</button><button onclick="chooseDay()">Week</button><button onclick="showProgress()">Progress</button></div>
+</div>`;
+}
+function target(e){if(e[1]==="rep")return e[2]+" reps";if(e[1]==="repSide")return e[2]+" each side";if(e[1]==="repTotal")return e[2]+" total";if(e[1]==="timeSide")return e[2]+" sec each side";return e[2]+" sec"}
+function toggleDone(i){setDone(day,i,current.round,!isDone(day,i,current.round));render()}
+function startNext(){let w=workouts[day];let i=w.ex.findIndex((_,i)=>!isDone(day,i,current.round));if(i<0){completeRound();return} current.index=i; showExercise(i)}
+function showExercise(i){let e=workouts[day].ex[i];let timed=["time","timeSide"].includes(e[1]);document.getElementById("root").insertAdjacentHTML("beforeend",`<div class="modal open" id="exerciseModal"><div class="sheet center"><div class="small">ROUND ${current.round} • EXERCISE ${i+1}/${workouts[day].ex.length}</div><h2>${e[0]}</h2><p>${e[3]}</p><div class="timer" id="timerDisplay">${timed?fmt(e[2]):e[2]}</div><div class="row"><button class="dark grow" onclick="${timed?'startTimer('+e[2]+')':'finishExercise('+i+')'}">${timed?'START TIMER':'MARK COMPLETE'}</button><button class="outline" onclick="closeModal()">CLOSE</button></div></div></div>`)}
+function startTimer(n){clearInterval(timer);seconds=n;document.getElementById("timerDisplay").textContent=fmt(seconds);timer=setInterval(()=>{seconds--;document.getElementById("timerDisplay").textContent=fmt(Math.max(0,seconds));if(seconds<=0){clearInterval(timer);finishExercise(current.index)}},1000)}
+function finishExercise(i){setDone(day,i,current.round,true);closeModal();render();setTimeout(()=>startNext(),100)}
+function closeModal(){clearInterval(timer);let m=document.querySelector(".modal");if(m)m.remove()}
+function showTimer(){document.getElementById("root").insertAdjacentHTML("beforeend",`<div class="modal open"><div class="sheet center"><h2>Quick Timer</h2><div class="timer" id="timerDisplay">00:30</div><div class="row"><button class="dark grow" onclick="startTimer(30)">30 sec</button><button class="outline" onclick="startTimer(45)">45 sec</button></div><br><button class="outline" onclick="closeModal()">CLOSE</button></div></div>`)}
+function completeRound(){workouts[day].ex.forEach((_,i)=>setDone(day,i,current.round,true));markWorkout();if(current.round<3){current.round++;alert("Round complete! 🔥 Round "+current.round+" is ready when you are.");}else alert("Workout complete! 💪");render()}
+function chooseDay(){let d=prompt("Choose a day: Mon, Tue, Wed, Thu, or Fri",day);d=d?.slice(0,3);if(workouts[d]){day=d;current.round=1;render()}}
+function showProgress(){let total=Object.keys(state.completed).filter(k=>k.endsWith("-workout")).length;alert("Workouts completed: "+total+"\\nCurrent streak: "+(state.streak||0)+"\\n\\nKeep stacking wins.")}
+render();
+</script>
+</body>
+</html>
