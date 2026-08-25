@@ -16,14 +16,15 @@ button{border:0;border-radius:12px;padding:12px 15px;font-weight:700;font-size:1
 .primary{background:#fff;color:#111827}.dark{background:#111827;color:#fff}.outline{background:#fff;border:1px solid var(--line);color:var(--ink)}
 .row{display:flex;gap:10px;align-items:center}.between{justify-content:space-between}.grow{flex:1}
 .progress{height:9px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin:12px 0}.bar{height:100%;background:#16a34a;width:0}
-.exercise{display:flex;align-items:center;gap:12px}.num{width:34px;height:34px;border-radius:50%;background:#eef0f3;display:grid;place-items:center;font-weight:800}.done .num{background:#dcfce7;color:#15803d}.done .title{text-decoration:line-through;color:var(--muted)}
+.exercise{display:flex;align-items:center;gap:12px}.num{width:34px;height:34px;border-radius:50%;background:#eef0f3;display:grid;place-items:center;font-weight:800}.done .num{background:#dcfce7;color:#15803d}
 .check{width:42px;height:42px;border-radius:12px;padding:0;background:#f3f4f6;font-size:20px}.done .check{background:#dcfce7;color:#15803d}
 .small{font-size:13px;color:var(--muted)}.tag{display:inline-block;background:#eef2ff;padding:5px 8px;border-radius:8px;font-size:12px;font-weight:700}
-.nav{position:sticky;bottom:12px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:8px;display:flex;gap:6px;box-shadow:0 6px 24px #0002}.nav button{flex:1;background:transparent}.nav button.active{background:#111827;color:#fff}
+.nav{position:sticky;bottom:12px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:8px;display:flex;gap:6px;box-shadow:0 6px 24px #0002}.nav button{flex:1;background:transparent;border:0;padding:10px;border-radius:10px;cursor:pointer}.nav button.active{background:#111827;color:#fff}
 .timer{font-size:64px;font-variant-numeric:tabular-nums;text-align:center;font-weight:800;margin:20px 0}.center{text-align:center}
 select,input{padding:11px;border:1px solid var(--line);border-radius:10px;font-size:15px;background:#fff}
-.modal{position:fixed;inset:0;background:#0007;display:none;align-items:end;justify-content:center}.modal.open{display:flex}.sheet{background:#fff;border-radius:22px 22px 0 0;padding:22px;max-width:680px;width:100%;max-height:85vh;overflow:auto}
+.modal{position:fixed;inset:0;background:#0007;display:none;align-items:end;justify-content:center}.modal.open{display:flex}.sheet{background:#fff;border-radius:22px 22px 0 0;padding:22px;max-width:100vw;width:100%}
 hr{border:0;border-top:1px solid var(--line);margin:16px 0}
+.side-prompt{background:#fef3c7;padding:16px;border-radius:12px;margin:16px 0;text-align:center;font-weight:600}
 </style>
 </head>
 <body>
@@ -77,9 +78,21 @@ const dayNames=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 let state=JSON.parse(localStorage.getItem("dbds")||'{"completed":{},"streak":0,"lastDate":"","round":1}');
 let day=dayNames[new Date().getDay()];
 if(day==="Sun") day="Mon";
-let current={day,round:1,index:0};
+let current={day,round:1,index:0,side:null};
 let timer=null, seconds=0;
 
+function playTimerSound(){
+  const audioContext=new(window.AudioContext||window.webkitAudioContext)();
+  const osc=audioContext.createOscillator();
+  const gain=audioContext.createGain();
+  osc.connect(gain);
+  gain.connect(audioContext.destination);
+  osc.frequency.value=800;
+  gain.gain.setValueAtTime(0.3,audioContext.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01,audioContext.currentTime+0.5);
+  osc.start(audioContext.currentTime);
+  osc.stop(audioContext.currentTime+0.5);
+}
 function save(){localStorage.setItem("dbds",JSON.stringify(state))}
 function todayKey(){return new Date().toISOString().slice(0,10)}
 function isDone(d,i,r){return !!state.completed[todayKey()+"-"+d+"-"+r+"-"+i]}
@@ -91,25 +104,25 @@ const w=workouts[day]; const doneCount=w.ex.reduce((a,_,i)=>a+(isDone(day,i,curr
 document.getElementById("root").innerHTML=`
 <div class="app">
 <div class="top"><div><h1>Dad Bod → Dad Strong</h1><div class="sub">No weights. Real life. Keep showing up.</div></div><span class="tag">Week 1</span></div>
-<div class="card hero"><div class="muted">${day} • Round ${current.round}</div><h2>${w.name}</h2><div class="muted">${w.focus}</div><div class="progress"><div class="bar" style="width:${doneCount/w.ex.length*100}%"></div></div><div class="row between"><span>${doneCount}/${w.ex.length} exercises</span><button class="primary" onclick="startNext()">START NEXT</button></div></div>
+<div class="card hero"><div class="muted">${day} • Round ${current.round}</div><h2>${w.name}</h2><div class="muted">${w.focus}</div><div class="progress"><div class="bar" style="width:${doneCount/w.ex.length*100}%"></div></div></div>
 <div class="card"><div class="row between"><strong>Today</strong><span class="small">${state.streak||0} workout streak 🔥</span></div></div>
-${w.ex.map((e,i)=>`<div class="card ${isDone(day,i,current.round)?'done':''}"><div class="exercise"><div class="num">${i+1}</div><div class="grow"><div class="title"><strong>${e[0]}</strong></div><div class="small">${target(e)}</div></div><button class="check" onclick="toggleDone(${i})">${isDone(day,i,current.round)?'✓':'○'}</button></div></div>`).join("")}
+${w.ex.map((e,i)=>`<div class="card ${isDone(day,i,current.round)?'done':''}"><div class="exercise"><div class="num">${i+1}</div><div class="grow"><div class="title"><strong>${e[0]}</strong></div><div class="small">${target(e)}</div><div class="small">${e[3]}</div></div></div><button class="check" onclick="toggleDone(${i})">${isDone(day,i,current.round)?'✓':''}</button></div>`).join("")}
 <div class="row"><button class="dark grow" onclick="completeRound()">COMPLETE ROUND</button><button class="outline" onclick="showTimer()">TIMER</button></div>
-<div class="card"><strong>How to use</strong><p class="small">Do one round when life is busy. Do two when you can. Three is a bonus. Tap ✓ after each exercise. Your progress saves automatically on this device.</p></div>
+<div class="card"><strong>How to use</strong><p class="small">Do one round when life is busy. Do two when you can. Three is a bonus. Tap ✓ after each exercise. Your progress saves automatically every time you complete a round. For exercises with sides (indicated by "each side"), you'll do one side and get a reminder to flip before the next side starts.</p></div>
 <div class="nav"><button class="active">Today</button><button onclick="chooseDay()">Week</button><button onclick="showProgress()">Progress</button></div>
 </div>`;
 }
-function target(e){if(e[1]==="rep")return e[2]+" reps";if(e[1]==="repSide")return e[2]+" each side";if(e[1]==="repTotal")return e[2]+" total";if(e[1]==="timeSide")return e[2]+" sec each side";return e[2]+" sec"}
+function target(e){if(e[1]==="rep")return e[2]+" reps";if(e[1]==="repSide")return e[2]+" each side";if(e[1]==="repTotal")return e[2]+" total";if(e[1]==="timeSide")return e[2]+" sec each side";return e[2]+" seconds"}
 function toggleDone(i){setDone(day,i,current.round,!isDone(day,i,current.round));render()}
 function startNext(){let w=workouts[day];let i=w.ex.findIndex((_,i)=>!isDone(day,i,current.round));if(i<0){completeRound();return} current.index=i; showExercise(i)}
-function showExercise(i){let e=workouts[day].ex[i];let timed=["time","timeSide"].includes(e[1]);document.getElementById("root").insertAdjacentHTML("beforeend",`<div class="modal open" id="exerciseModal"><div class="sheet center"><div class="small">ROUND ${current.round} • EXERCISE ${i+1}/${workouts[day].ex.length}</div><h2>${e[0]}</h2><p>${e[3]}</p><div class="timer" id="timerDisplay">${timed?fmt(e[2]):e[2]}</div><div class="row"><button class="dark grow" onclick="${timed?'startTimer('+e[2]+')':'finishExercise('+i+')'}">${timed?'START TIMER':'MARK COMPLETE'}</button><button class="outline" onclick="closeModal()">CLOSE</button></div></div></div>`)}
-function startTimer(n){clearInterval(timer);seconds=n;document.getElementById("timerDisplay").textContent=fmt(seconds);timer=setInterval(()=>{seconds--;document.getElementById("timerDisplay").textContent=fmt(Math.max(0,seconds));if(seconds<=0){clearInterval(timer);finishExercise(current.index)}},1000)}
+function showExercise(i){let e=workouts[day].ex[i];let timed=["time","timeSide"].includes(e[1]);let isSide=["timeSide","repSide"].includes(e[1]);document.getElementById("root").insertAdjacentHTML("beforeend",`<div class="modal open" id="exercise"><div class="sheet"><h2>${e[0]}</h2><div class="small">${e[3]}</div><div class="timer" id="timerDisplay">00:00</div><div class="center">${timed?`<button class="dark" onclick="startTimer(${e[2]},${i},${isSide})">START TIMER</button>`:`<button class="dark" onclick="finishExercise(${i})">DONE</button>`}</div></div></div>`);if(!timed)startNext()}
+function startTimer(n,i,isSide){clearInterval(timer);seconds=n;current.side=isSide?'a':null;document.getElementById("timerDisplay").textContent=fmt(seconds);timer=setInterval(()=>{seconds--;document.getElementById("timerDisplay").textContent=fmt(seconds);if(seconds<=0){clearInterval(timer);playTimerSound();if(isSide&&current.side==='a'){current.side='b';document.querySelector(".modal").innerHTML=`<div class="sheet center"><div class="side-prompt">Great! Now do the OTHER side →</div><div class="timer" id="timerDisplay">00:00</div><button class="dark" onclick="startTimer(${workouts[day].ex[i][2]},${i},false)">START SIDE 2</button></div>`;return}finishExercise(i)}},1000)}
 function finishExercise(i){setDone(day,i,current.round,true);closeModal();render();setTimeout(()=>startNext(),100)}
 function closeModal(){clearInterval(timer);let m=document.querySelector(".modal");if(m)m.remove()}
-function showTimer(){document.getElementById("root").insertAdjacentHTML("beforeend",`<div class="modal open"><div class="sheet center"><h2>Quick Timer</h2><div class="timer" id="timerDisplay">00:30</div><div class="row"><button class="dark grow" onclick="startTimer(30)">30 sec</button><button class="outline" onclick="startTimer(45)">45 sec</button></div><br><button class="outline" onclick="closeModal()">CLOSE</button></div></div>`)}
-function completeRound(){workouts[day].ex.forEach((_,i)=>setDone(day,i,current.round,true));markWorkout();if(current.round<3){current.round++;alert("Round complete! 🔥 Round "+current.round+" is ready when you are.");}else alert("Workout complete! 💪");render()}
+function showTimer(){document.getElementById("root").insertAdjacentHTML("beforeend",`<div class="modal open"><div class="sheet center"><h2>Quick Timer</h2><div class="timer" id="timerDisplay">00:00</div><input type="number" id="seconds" value="60" min="1" max="3600" style="width:80px;text-align:center;margin:10px 0"><div class="row"><button class="dark grow" onclick="let n=parseInt(document.getElementById('seconds').value);if(n>0)startTimer(n,-1,false)">START</button><button class="outline" onclick="closeModal()">Cancel</button></div></div></div>`)}
+function completeRound(){workouts[day].ex.forEach((_,i)=>setDone(day,i,current.round,true));markWorkout();if(current.round<3){current.round++;alert("Round complete! 🔥 Round "+current.round+" is ready. Keep crushing it!");render()}else{alert("All 3 rounds complete! 🔥🔥🔥 Rest and come back tomorrow!");state.completed={};current.round=1;render()}}
 function chooseDay(){let d=prompt("Choose a day: Mon, Tue, Wed, Thu, or Fri",day);d=d?.slice(0,3);if(workouts[d]){day=d;current.round=1;render()}}
-function showProgress(){let total=Object.keys(state.completed).filter(k=>k.endsWith("-workout")).length;alert("Workouts completed: "+total+"\\nCurrent streak: "+(state.streak||0)+"\\n\\nKeep stacking wins.")}
+function showProgress(){let total=Object.keys(state.completed).filter(k=>k.endsWith("-workout")).length;alert("Workouts completed: "+total+"\nCurrent streak: "+(state.streak||0)+"\n\nKeep stacking W's! 💪")}
 render();
 </script>
 </body>
